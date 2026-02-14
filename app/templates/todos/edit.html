@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}TaskFlow | Edit Task{% endblock %}
+{% block content %}
+<section class="single-panel">
+  <div class="panel">
+    <h2>Edit Task</h2>
+    <form action="{{ url_for('todos.edit_task', task_id=task.id) }}" method="post" class="stack">
+      <label>Title</label>
+      <input type="text" name="title" value="{{ task.title }}" required maxlength="160" />
+
+      <label>Description</label>
+      <textarea name="description" rows="5">{{ task.description }}</textarea>
+
+      <div class="split">
+        <div>
+          <label>Status</label>
+          <select name="status">
+            {% for item in valid_statuses %}
+            <option value="{{ item }}" {% if task.status == item %}selected{% endif %}>{{ item.replace('_', ' ').title() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Priority</label>
+          <select name="priority">
+            {% for item in valid_priorities %}
+            <option value="{{ item }}" {% if task.priority == item %}selected{% endif %}>{{ item.title() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="split">
+        <div>
+          <label>Due Date</label>
+          <input type="date" name="due_date" value="{{ task.due_date if task.due_date else '' }}" />
+        </div>
+        <div>
+          <label>Category</label>
+          <select name="category_id">
+            <option value="">None</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if task.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <button type="submit" class="btn primary">Save Changes</button>
+        <a href="{{ url_for('todos.index') }}" class="btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

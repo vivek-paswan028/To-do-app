@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}TaskFlow | Dashboard{% endblock %}
+{% block content %}
+<section class="grid">
+  <aside class="panel">
+    <h2>New Task</h2>
+    <form action="{{ url_for('todos.create_task') }}" method="post" class="stack">
+      <label>Title</label>
+      <input type="text" name="title" required maxlength="160" placeholder="Prepare sprint planning" />
+
+      <label>Description</label>
+      <textarea name="description" rows="3" placeholder="Optional details"></textarea>
+
+      <div class="split">
+        <div>
+          <label>Status</label>
+          <select name="status">
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div>
+          <label>Priority</label>
+          <select name="priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="split">
+        <div>
+          <label>Due Date</label>
+          <input type="date" name="due_date" />
+        </div>
+        <div>
+          <label>Category</label>
+          <select name="category_id">
+            <option value="">None</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn primary">Create Task</button>
+    </form>
+
+    <hr />
+
+    <h2>New Category</h2>
+    <form action="{{ url_for('todos.create_category') }}" method="post" class="inline">
+      <input type="text" name="name" maxlength="60" placeholder="Work" required />
+      <button type="submit" class="btn">Add</button>
+    </form>
+
+    <hr />
+
+    <h2>Stats</h2>
+    <div class="stats">
+      <div><span>All</span><strong>{{ stats['all'] }}</strong></div>
+      <div><span>To do</span><strong>{{ stats['todo'] }}</strong></div>
+      <div><span>In progress</span><strong>{{ stats['in_progress'] }}</strong></div>
+      <div><span>Done</span><strong>{{ stats['done'] }}</strong></div>
+      <div><span>Overdue</span><strong>{{ stats['overdue'] }}</strong></div>
+    </div>
+
+    <form action="{{ url_for('todos.clear_completed') }}" method="post" onsubmit="return confirm('Clear all completed tasks?');">
+      <button type="submit" class="btn danger full">Clear Completed</button>
+    </form>
+  </aside>
+
+  <main class="panel">
+    <h2>Tasks</h2>
+    <form method="get" action="{{ url_for('todos.index') }}" class="filters">
+      <input type="text" name="q" value="{{ filters['q'] }}" placeholder="Search title or description" />
+
+      <select name="status">
+        <option value="all" {% if filters['status'] == 'all' %}selected{% endif %}>All statuses</option>
+        {% for item in valid_statuses %}
+        <option value="{{ item }}" {% if filters['status'] == item %}selected{% endif %}>{{ item.replace('_', ' ').title() }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="priority">
+        <option value="all" {% if filters['priority'] == 'all' %}selected{% endif %}>All priorities</option>
+        {% for item in valid_priorities %}
+        <option value="{{ item }}" {% if filters['priority'] == item %}selected{% endif %}>{{ item.title() }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="category">
+        <option value="all" {% if filters['category'] == 'all' %}selected{% endif %}>All categories</option>
+        {% for category in categories %}
+        <option value="{{ category.id }}" {% if filters['category'] == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="due">
+        <option value="all" {% if filters['due'] == 'all' %}selected{% endif %}>Any due</option>
+        <option value="today" {% if filters['due'] == 'today' %}selected{% endif %}>Due today</option>
+        <option value="week" {% if filters['due'] == 'week' %}selected{% endif %}>Due this week</option>
+        <option value="overdue" {% if filters['due'] == 'overdue' %}selected{% endif %}>Overdue</option>
+      </select>
+
+      <button type="submit" class="btn">Apply</button>
+    </form>
+
+    <ul class="task-list">
+      {% for task in todos %}
+      <li class="task-card {% if task.status == 'done' %}done{% endif %} {% if task.is_overdue %}overdue{% endif %}">
+        <div class="task-head">
+          <div>
+            <h3>{{ task.title }}</h3>
+            <p>{{ task.description or 'No description provided.' }}</p>
+          </div>
+          <div class="chips">
+            {% if task.is_pinned %}<span class="chip pin">Pinned</span>{% endif %}
+            <span class="chip priority {{ task.priority }}">{{ task.priority }}</span>
+            <span class="chip status">{{ task.status.replace('_', ' ') }}</span>
+            {% if task.category %}<span class="chip">{{ task.category.name }}</span>{% endif %}
+            {% if task.due_date %}<span class="chip due">Due {{ task.due_date }}</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="actions">
+          <form action="{{ url_for('todos.update_status', task_id=task.id, q=filters['q'], status=filters['status'], priority=filters['priority'], category=filters['category'], due=filters['due']) }}" method="post">
+            <select name="status" onchange="this.form.submit()">
+              <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To do</option>
+              <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In progress</option>
+              <option value="done" {% if task.status == 'done' %}selected{% endif %}>Done</option>
+            </select>
+          </form>
+
+          <form action="{{ url_for('todos.toggle_pin', task_id=task.id, q=filters['q'], status=filters['status'], priority=filters['priority'], category=filters['category'], due=filters['due']) }}" method="post">
+            <button type="submit" class="btn">{% if task.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+          </form>
+
+          <a href="{{ url_for('todos.edit_task_form', task_id=task.id) }}" class="btn">Edit</a>
+
+          <form action="{{ url_for('todos.delete_task', task_id=task.id) }}" method="post" onsubmit="return confirm('Delete this task?');">
+            <button type="submit" class="btn danger">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="task-empty">No tasks found for current filters.</li>
+      {% endfor %}
+    </ul>
+  </main>
+</section>
+{% endblock %}
