@@ -9,8 +9,21 @@
   <body>
     <div class="shell">
       <header class="topbar">
-        <h1><a href="{{ url_for('todos.index') }}">TaskFlow</a></h1>
-        <p>Advanced Flask task management</p>
+        <div>
+          <h1><a href="{{ url_for('todos.index') if current_user.is_authenticated else url_for('auth.login') }}">TaskFlow</a></h1>
+          <p>Advanced Flask task management</p>
+        </div>
+        <div class="topbar-actions">
+          {% if current_user.is_authenticated %}
+            <span class="user-pill">{{ current_user.username }}</span>
+            <form action="{{ url_for('auth.logout') }}" method="post">
+              <button type="submit" class="btn">Logout</button>
+            </form>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="btn primary">Register</a>
+          {% endif %}
+        </div>
       </header>
 
       {% with messages = get_flashed_messages(with_categories=true) %}

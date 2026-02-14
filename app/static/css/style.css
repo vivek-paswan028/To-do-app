@@ -32,6 +32,10 @@ body {
 
 .topbar {
   margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .topbar h1 {
@@ -47,6 +51,20 @@ body {
 .topbar p {
   margin: 4px 0 0;
   color: var(--muted);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.user-pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: #fff;
 }
 
 .flash-wrap {
@@ -88,6 +106,24 @@ body {
 
 .single-panel {
   max-width: 760px;
+}
+
+.auth-wrap {
+  margin: 0 auto;
+}
+
+.auth-card {
+  max-width: 480px;
+}
+
+.sub {
+  margin: -6px 0 12px;
+  color: var(--muted);
+}
+
+.auth-switch {
+  margin: 12px 0 0;
+  font-size: 0.95rem;
 }
 
 h2 {
