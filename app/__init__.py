@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from flask import Flask
+from sqlalchemy.exc import SQLAlchemyError
 
 from config import Config
 
@@ -17,9 +18,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     app.register_blueprint(todos_bp)
 
-    with app.app_context():
-        from . import models
+    from . import models
 
-        db.create_all()
+    @app.before_request
+    def ensure_schema() -> None:
+        if app.config.get("_SCHEMA_READY"):
+            return
+        try:
+            db.create_all()
+            app.config["_SCHEMA_READY"] = True
+        except SQLAlchemyError:
+            # Keep import/runtime alive on serverless and surface DB issues per request.
+            app.logger.exception("Database schema initialization failed.")
 
     return app
